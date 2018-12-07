@@ -42,9 +42,55 @@ class Board(object):
                 print('{} '.format(printed_character), end='')
             print('')
 
+    def get_oponent(self, player):
+        assert player in ('W', 'B')
+        if player == 'W':
+            return 'B'
+        else:
+            return 'W'
+
     def get_symbol(self, xy):
         x, y = xy
+        assert self.is_on_board(x, y)
+
         return self.data[y][x]
+
+    def is_on_board(self, x, y):
+        return x>=0 and x<self.board_size and y>=0 and y<self.board_size
+
+    def make_move(self, xy, player, play_test=True):
+        assert isinstance(xy, (tuple, list)) and len(xy) == 2
+        assert player in ('W', 'B')
+
+        if self.get_symbol(xy) != '0':
+            return 0
+
+        board = self.data
+        opponent = self.get_oponent(player)
+
+        x, y = xy
+        board[y][x] = player
+        flip_tiles = []
+
+        for dx,dy in [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]:
+            x_cur, y_cur = x+dx, y+dy
+            while self.is_on_board(x_cur, y_cur) and board[y_cur][x_cur] == opponent:
+                x_cur, y_cur = x_cur+dx, y_cur+dy
+            if self.is_on_board(x_cur, y_cur) and board[y_cur][x_cur] == player:
+                while [x_cur,y_cur] != [x, y]:
+                    x_cur, y_cur = x_cur-dx, y_cur-dy
+                    flip_tiles.append([y_cur, x_cur])
+
+        board[y][x] = '0'
+
+        if len(flip_tiles) == 0:
+            return 0
+
+        if not play_test:
+            for [y_cur, x_cur] in flip_tiles:
+                self.data[y_cur][x_cur] = player
+
+        return len(flip_tiles)
 
     def is_valid_move(self, xy, player) -> bool:
         assert isinstance(xy, (tuple, list)) and len(xy) == 2
@@ -53,21 +99,48 @@ class Board(object):
         if self.get_symbol(xy) != '0':
             return False
 
-        # TODO
-        raise NotImplemented()
+        score = self.make_move(xy, player, play_test=True)
+        return score > 0
 
     def move(self, xy, player):
         assert isinstance(xy, (tuple, list)) and len(xy) == 2
         assert player in ('W', 'B')
 
-        if not self.is_valid_move(xy, player):
+        score = self.make_move(xy, player, play_test=False)
+        if score <= 0:
             raise RuntimeError('Invalid move: {}, {}'.format(xy, player))
 
-        self.force_place_symbol(xy, symbol=player)
+        return score
 
-        # TODO: Flip existing symbols.
-        raise NotImplemented()
+    def get_legal_moves(self, player):
+        linear_range = self.board_size ** 2
+        legal_moves = []
+        for i in range(linear_range):
+            x, y = self.subscripts_from_linear_index(i)
+            if self.is_valid_move((x, y), player):
+                legal_moves.append((x,y))
+        return legal_moves
 
+    def get_scores(self):
+        b_count = 0
+        w_count = 0
+
+        linear_range = self.board_size ** 2
+        for i in range(linear_range):
+            x, y = self.subscripts_from_linear_index(i)
+            if self.data[y][x] == 'B':
+                b_count = b_count+1
+            elif self.data[y][x] == 'W':
+                w_count = w_count+1
+
+        return b_count, w_count
+
+    def get_winner(self):
+        b_count, w_count = self.get_scores()
+        if b_count >= w_count:
+            return 'B'
+        else:
+            return 'W'
 
 class Game(object):
     def __init__(self, board: Board):
