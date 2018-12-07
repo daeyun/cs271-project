@@ -74,9 +74,11 @@ class Board(object):
 
         for dx,dy in [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]:
             x_cur, y_cur = x+dx, y+dy
+            flip_count = 0;
             while self.is_on_board(x_cur, y_cur) and board[y_cur][x_cur] == opponent:
+                flip_count = flip_count+1
                 x_cur, y_cur = x_cur+dx, y_cur+dy
-            if self.is_on_board(x_cur, y_cur) and board[y_cur][x_cur] == player:
+            if self.is_on_board(x_cur, y_cur) and board[y_cur][x_cur] == player and flip_count > 0:
                 while [x_cur,y_cur] != [x, y]:
                     x_cur, y_cur = x_cur-dx, y_cur-dy
                     flip_tiles.append([y_cur, x_cur])
