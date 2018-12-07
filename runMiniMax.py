@@ -1,37 +1,38 @@
 import othello
 
-def minimax(state, depth):
-	legalMoves = state.generateLegalMoves()
-	bestScore = float("-inf") # Start as maxPlayer (you)
-	bestMove = None
-	for move in legalMoves:
-		successor = state.makeMove(move) # This should return a new state, not change the one passed in
-		score = minPlayer(successor, depth-1) # Switch to opponent (minPlayer)
-		if bestMove is None or score > bestScore:
-			bestMove = move
-			bestScore = score
-	return bestMove
-	
-def minPlayer(state, depth):
-	if depth == 0 or state.gameOver():
-		return heuristic(state)
-	legalMoves = state.generateLegalMoves()
-	bestScore = float("inf")
-	for move in legalMoves:
-		successor = state.makeMove(move) # This should return a new state, not change the one passed in
-		score = maxPlayer(successor, depth-1) # Switch to maxPlayer
-		if score < bestScore:
-			bestScore = score
-	return bestScore
-	
-def maxPlayer(state, depth):
-	if depth == 0 or state.gameOver():
-		return heuristic(state)
-	legalMoves = state.generateLegalMoves()
-	bestScore = float("-inf")
-	for move in legalMoves:
-		successor = state.makeMove(move) # This should return a new state, not change the one passed in
-		score = minPlayer(successor, depth-1) # Switch to minPlayer
-		if score > bestScore:
-			bestScore = score
-	return bestScore
+class MiniMax(object):
+
+    @staticmethod
+    def minimax_play(board, player, depth):
+        if depth == 0:
+            b_s, w_s = board.get_scores()
+            return b_s, w_s, None
+
+        legal_moves = board.get_legal_moves(player)
+
+        minimax_move = None
+        minimax_score = 0
+
+        for move in legal_moves:
+            temp_score = board.make_move(move, player, play_test=False)
+            b_score, w_score, _ = MiniMax.minimax_play(board, board.get_oponent(player), depth-1)
+            if player == 'B':
+                if b_score + temp_score > minimax_score:
+                    minimax_score = b_score + temp_score
+                    minimax_move = move
+            else:
+                if w_score + temp_score > minimax_score:
+                    minimax_score = w_score + temp_score
+                    minimax_move = move
+
+        if player == 'B':
+            return minimax_score, 0, minimax_move
+        else:
+            return 0, minimax_score, minimax_move
+
+    @staticmethod
+    def minimax_search(board, player):
+        assert player in ('W', 'B')
+
+        minimax_search_depth = 3
+        return MiniMax.minimax_play(board, player, minimax_search_depth)[2]
