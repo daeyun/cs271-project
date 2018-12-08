@@ -4,10 +4,10 @@ import othello
 def main():
     board = othello.Board()
 
+    board.force_place_symbol((3, 3), 'W')
     board.force_place_symbol((4, 4), 'W')
-    board.force_place_symbol((5, 5), 'W')
-    board.force_place_symbol((4, 5), 'B')
-    board.force_place_symbol((5, 4), 'B')
+    board.force_place_symbol((3, 4), 'B')
+    board.force_place_symbol((4, 3), 'B')
 
     board.print()
     print("--------------")

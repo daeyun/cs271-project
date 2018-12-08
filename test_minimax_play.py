@@ -11,11 +11,11 @@ def main():
         for j in range(8):
             board.force_place_symbol((i, j), '0')
 
+    board.force_place_symbol((3, 3), 'B')
     board.force_place_symbol((4, 4), 'B')
-    board.force_place_symbol((5, 5), 'B')
 
-    board.force_place_symbol((4, 5), 'W')
-    board.force_place_symbol((5, 4), 'W')
+    board.force_place_symbol((3, 4), 'W')
+    board.force_place_symbol((4, 3), 'W')
 
     board.print()
     print("--------------")
