@@ -8,7 +8,7 @@ class Board(object):
         """
         self.board_size = 8
         self.data = [['0' for _ in range(self.board_size)] for _ in range(self.board_size)]
-        
+
         self.num_whites = 0
         self.num_blacks = 0
         self.turns_played = 0
@@ -33,23 +33,26 @@ class Board(object):
     def force_place_symbol(self, xy, symbol):
         assert symbol in ['0', 'W', 'B']
         assert isinstance(xy, (tuple, list)) and len(xy) == 2
-        self.turns_played = 0 # Reset turns when artifically placing pieces
+        self.turns_played = 0  # Reset turns when artifically placing pieces
         x, y = xy
-        
+
         if self.data[y][x] == 'W':
             self.num_whites -= 1
         elif self.data[y][x] == 'B':
             self.num_blacks -= 1
-        
+
         self.data[y][x] = symbol
-        
+
         if symbol == 'W':
             self.num_whites += 1
         elif symbol == 'B':
             self.num_blacks += 1
 
     def print(self):
-        for row in self.data:
+        print('  {}'.format(' '.join([str(item) for item in range(8)])))
+
+        for i_row, row in enumerate(self.data):
+            print('{} '.format(i_row), end='')
             for item in row:
                 if item == '0':
                     printed_character = '.'
@@ -57,7 +60,7 @@ class Board(object):
                     printed_character = item
                 print('{} '.format(printed_character), end='')
             print('')
-            
+
         print('Number of Black Pieces: ', self.num_blacks)
         print('Number of White Pieces: ', self.num_whites)
 
@@ -75,7 +78,7 @@ class Board(object):
         return self.data[y][x]
 
     def is_on_board(self, x, y):
-        return x>=0 and x<self.board_size and y>=0 and y<self.board_size
+        return x >= 0 and x < self.board_size and y >= 0 and y < self.board_size
 
     def make_move(self, xy, player, play_test=True):
         assert isinstance(xy, (tuple, list)) and len(xy) == 2
@@ -88,20 +91,20 @@ class Board(object):
         opponent = self.get_opponent(player)
 
         self.turns_played += 1
-        
+
         x, y = xy
         board[y][x] = player
         flip_tiles = []
 
-        for dx,dy in [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]:
-            x_cur, y_cur = x+dx, y+dy
+        for dx, dy in [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]:
+            x_cur, y_cur = x + dx, y + dy
             flip_count = 0;
             while self.is_on_board(x_cur, y_cur) and board[y_cur][x_cur] == opponent:
-                flip_count = flip_count+1
-                x_cur, y_cur = x_cur+dx, y_cur+dy
+                flip_count = flip_count + 1
+                x_cur, y_cur = x_cur + dx, y_cur + dy
             if self.is_on_board(x_cur, y_cur) and board[y_cur][x_cur] == player and flip_count > 0:
-                while [x_cur,y_cur] != [x, y]:
-                    x_cur, y_cur = x_cur-dx, y_cur-dy
+                while [x_cur, y_cur] != [x, y]:
+                    x_cur, y_cur = x_cur - dx, y_cur - dy
                     flip_tiles.append([y_cur, x_cur])
 
         board[y][x] = '0'
@@ -114,13 +117,13 @@ class Board(object):
                 self.data[y_cur][x_cur] = player
             num_tiles_converted = len(flip_tiles) - 1
             if player == 'W':
-                self.num_whites += 1 # Increase by 1 for tile placed on board
-                self.num_whites += num_tiles_converted # Increase again for each tile flipped
-                self.num_blacks -= num_tiles_converted # Opponent loses those number of pieces
+                self.num_whites += 1  # Increase by 1 for tile placed on board
+                self.num_whites += num_tiles_converted  # Increase again for each tile flipped
+                self.num_blacks -= num_tiles_converted  # Opponent loses those number of pieces
             else:
-                self.num_blacks += 1 # Increase by 1 for tile placed on board
-                self.num_blacks += num_tiles_converted # Increase again for each tile flipped
-                self.num_whites -= num_tiles_converted # Opponent loses those number of pieces
+                self.num_blacks += 1  # Increase by 1 for tile placed on board
+                self.num_blacks += num_tiles_converted  # Increase again for each tile flipped
+                self.num_whites -= num_tiles_converted  # Opponent loses those number of pieces
 
         return len(flip_tiles)
 
@@ -150,7 +153,7 @@ class Board(object):
         for i in range(linear_range):
             x, y = self.subscripts_from_linear_index(i)
             if self.is_valid_move((x, y), player):
-                legal_moves.append((x,y))
+                legal_moves.append((x, y))
         return legal_moves
 
     def get_scores(self):
@@ -161,9 +164,9 @@ class Board(object):
         for i in range(linear_range):
             x, y = self.subscripts_from_linear_index(i)
             if self.data[y][x] == 'B':
-                b_count = b_count+1
+                b_count = b_count + 1
             elif self.data[y][x] == 'W':
-                w_count = w_count+1
+                w_count = w_count + 1
 
         return b_count, w_count
 
@@ -175,7 +178,7 @@ class Board(object):
             return 'W'
 
     def get_corner_disk_count(self):
-        n = self.board_size-1
+        n = self.board_size - 1
         corner_disks = []
         corner_positions = [(0, 0), (0, n), (n, 0), (n, n)]
         for pos in corner_positions:
@@ -207,7 +210,8 @@ class Board(object):
 
                 is_permanent = True
                 for dir in dir_pairs:
-                    is_permanent = self.search_different_tile((i, j), tile, dir[0]) or self.search_different_tile((i, j), tile, dir[1])
+                    is_permanent = self.search_different_tile((i, j), tile, dir[0]) or self.search_different_tile(
+                        (i, j), tile, dir[1])
                     if not is_permanent:
                         break
 
@@ -232,7 +236,8 @@ class Board(object):
         b_score, w_score = self.heuristic_count()
         b_perm, w_perm = self.get_permanent_disk_count()
         b_moves, w_moves = self.heuristic_numMoves()
-        return b_score+b_perm+b_moves, w_score+w_perm+w_moves
+        return b_score + b_perm + b_moves, w_score + w_perm + w_moves
+
 
 class Game(object):
     def __init__(self, board: Board):

@@ -42,5 +42,5 @@ class MiniMax(object):
     def minimax_search(board, player):
         assert player in ('W', 'B')
 
-        minimax_search_depth = 3
+        minimax_search_depth = 4
         return MiniMax.minimax_play(board, player, minimax_search_depth)[2]
