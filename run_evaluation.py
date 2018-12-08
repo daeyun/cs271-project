@@ -1,10 +1,12 @@
 import othello
 import random
 from alphaBeta import alphaBeta
+import runMiniMax
 
 from third_party import dhconnelly
 from third_party import board_conversion
 
+minimax = runMiniMax.MiniMax()
 
 def find_move_third_party_dhconnelly(board: othello.Board, player_color: str, depth: int):
     """
@@ -38,7 +40,8 @@ def find_move_third_party_dhconnelly(board: othello.Board, player_color: str, de
 
 
 def find_move_ours(board, player_color, depth):
-    move = alphaBeta(state=board, depth=depth, player=player_color)
+    #move = alphaBeta(state=board, depth=depth, player=player_color)
+    move = minimax.minimax_search(board, player_color, depth=depth)
     return move
 
 
@@ -49,20 +52,20 @@ def play_against_dhconnelly(our_depth=3, their_depth=3):
         for j in range(8):
             board.force_place_symbol((i, j), '0')
 
-    board.force_place_symbol((3, 3), 'B')
-    board.force_place_symbol((4, 4), 'B')
+    board.force_place_symbol((3, 3), 'W')
+    board.force_place_symbol((4, 4), 'W')
 
-    board.force_place_symbol((3, 4), 'W')
-    board.force_place_symbol((4, 3), 'W')
+    board.force_place_symbol((3, 4), 'B')
+    board.force_place_symbol((4, 3), 'B')
 
     while True:
-        move_b = find_move_ours(board, 'W', depth=our_depth)
-        if move_b is not None:
-            board.make_move(move_b, 'W', play_test=False)
-
-        move_w = find_move_third_party_dhconnelly(board, 'B', depth=their_depth)
+        move_w = find_move_ours(board, 'W', depth=our_depth)
         if move_w is not None:
-            board.make_move(move_w, 'B', play_test=False)
+            board.make_move(move_w, 'W', play_test=False)
+
+        move_b = find_move_third_party_dhconnelly(board, 'B', depth=their_depth)
+        if move_b is not None:
+            board.make_move(move_b, 'B', play_test=False)
 
         if move_b is None and move_w is None:
             break
@@ -89,7 +92,7 @@ def win_rate(result, player):
 if __name__ == '__main__':
     for our_depth, their_depth in [(2, 2), (3, 2), (4, 2)]:
         random.seed(42)  # To make this reproducible, set random seed.
-        winners = [play_against_dhconnelly(our_depth=our_depth, their_depth=their_depth) for _ in range(30)]
+        winners = [play_against_dhconnelly(our_depth=our_depth, their_depth=their_depth) for _ in range(3)]
         print('our depth: {}, their depth: {}'.format(our_depth, their_depth))
         print(winners)
         rate = win_rate(winners, 'W')
