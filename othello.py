@@ -246,7 +246,7 @@ class Board(object):
             player_symbol = self.get_symbol(xy)
             if player_symbol == player:
                 ret += weights[i]
-            else:
+            elif player_symbol == self.get_opponent(player):
                 ret -= weights[i]
         return ret
 
