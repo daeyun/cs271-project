@@ -8,6 +8,10 @@ class Board(object):
         """
         self.board_size = 8
         self.data = [['0' for _ in range(self.board_size)] for _ in range(self.board_size)]
+        
+        self.num_whites = 0
+        self.num_blacks = 0
+        self.turns_played = 0
 
         if symbols is not None:
             assert len(symbols) == self.board_size ** 2
@@ -29,8 +33,20 @@ class Board(object):
     def force_place_symbol(self, xy, symbol):
         assert symbol in ['0', 'W', 'B']
         assert isinstance(xy, (tuple, list)) and len(xy) == 2
+        self.turns_played = 0 # Reset turns when artifically placing pieces
         x, y = xy
+        
+        if self.data[y][x] == 'W':
+            self.num_whites -= 1
+        elif self.data[y][x] == 'B':
+            self.num_blacks -= 1
+        
         self.data[y][x] = symbol
+        
+        if symbol == 'W':
+            self.num_whites += 1
+        elif symbol == 'B':
+            self.num_blacks += 1
 
     def print(self):
         for row in self.data:
@@ -41,8 +57,11 @@ class Board(object):
                     printed_character = item
                 print('{} '.format(printed_character), end='')
             print('')
+            
+        print('Number of Black Pieces: ', self.num_blacks)
+        print('Number of White Pieces: ', self.num_whites)
 
-    def get_oponent(self, player):
+    def get_opponent(self, player):
         assert player in ('W', 'B')
         if player == 'W':
             return 'B'
@@ -66,8 +85,10 @@ class Board(object):
             return 0
 
         board = self.data
-        opponent = self.get_oponent(player)
+        opponent = self.get_opponent(player)
 
+        self.turns_played += 1
+        
         x, y = xy
         board[y][x] = player
         flip_tiles = []
@@ -91,6 +112,15 @@ class Board(object):
         if not play_test:
             for [y_cur, x_cur] in flip_tiles:
                 self.data[y_cur][x_cur] = player
+            num_tiles_converted = len(flip_tiles) - 1
+            if player == 'W':
+                self.num_whites += 1 # Increase by 1 for tile placed on board
+                self.num_whites += num_tiles_converted # Increase again for each tile flipped
+                self.num_blacks -= num_tiles_converted # Opponent loses those number of pieces
+            else:
+                self.num_blacks += 1 # Increase by 1 for tile placed on board
+                self.num_blacks += num_tiles_converted # Increase again for each tile flipped
+                self.num_whites -= num_tiles_converted # Opponent loses those number of pieces
 
         return len(flip_tiles)
 
