@@ -94,7 +94,7 @@ class Board(object):
 
         x, y = xy
         board[y][x] = player
-        flip_tiles = []
+        flip_tiles = set([])
 
         for dx, dy in [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]:
             x_cur, y_cur = x + dx, y + dy
@@ -105,7 +105,7 @@ class Board(object):
             if self.is_on_board(x_cur, y_cur) and board[y_cur][x_cur] == player and flip_count > 0:
                 while [x_cur, y_cur] != [x, y]:
                     x_cur, y_cur = x_cur - dx, y_cur - dy
-                    flip_tiles.append([y_cur, x_cur])
+                    flip_tiles.add((y_cur, x_cur))
 
         board[y][x] = '0'
 
