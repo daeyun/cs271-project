@@ -2,9 +2,9 @@ import copy
 
 def alphaBeta(state, depth, player):
 	legalMoves = state.get_legal_moves(player)
-	state.print()
-	print('Current Player: ', player)
-	print('All legal moves from this position: ', legalMoves)
+	# state.print()
+	# print('Current Player: ', player)
+	# print('All legal moves from this position: ', legalMoves)
 	bestScore = float("-inf") # Start as maxPlayer (you)
 	bestMove = None
 	alpha = float("-inf")
@@ -62,10 +62,22 @@ def maxPlayer(state, depth, a, b, player):
 		if score > bestScore:
 			bestScore = score
 	return bestScore
-	
+
+
+def weighted_heuristic(state, player):
+	weights = [
+		120, -20, 20, 5, 5, 20, -20, 120,
+		-20, -40, -5, -5, -5, -5, -40, -20,
+		20, -5, 15, 3, 3, 15, -5, 20,
+		5, -5, 3, 3, 3, 3, -5, 5,
+		5, -5, 3, 3, 3, 3, -5, 5,
+		20, -5, 15, 3, 3, 15, -5, 20,
+		-20, -40, -5, -5, -5, -5, -40, -20,
+		120, -20, 20, 5, 5, 20, -20, 120,
+	]
+	return state.get_weighted_sum(weights, player)
+
+
 def heuristic(state, player):
 	assert player in ('W', 'B')
-	if player == 'W':
-		return state.turns_played * (state.num_whites - state.num_blacks)
-	else:
-		return state.turns_played * (state.num_blacks - state.num_whites)
+	return weighted_heuristic(state, player)

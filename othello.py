@@ -238,6 +238,18 @@ class Board(object):
         b_moves, w_moves = self.heuristic_numMoves()
         return b_score + b_perm + b_moves, w_score + w_perm + w_moves
 
+    def get_weighted_sum(self, weights, player):
+        assert len(weights) == self.board_size ** 2
+        ret = 0
+        for i in range(self.board_size ** 2):
+            xy = self.subscripts_from_linear_index(i)
+            player_symbol = self.get_symbol(xy)
+            if player_symbol == player:
+                ret += weights[i]
+            else:
+                ret -= weights[i]
+        return ret
+
 
 class Game(object):
     def __init__(self, board: Board):

@@ -56,13 +56,13 @@ def play_against_dhconnelly(our_depth=3, their_depth=3):
     board.force_place_symbol((4, 3), 'W')
 
     while True:
-        move_b = find_move_ours(board, 'B', depth=our_depth)
+        move_b = find_move_ours(board, 'W', depth=our_depth)
         if move_b is not None:
-            board.make_move(move_b, 'B', play_test=False)
+            board.make_move(move_b, 'W', play_test=False)
 
-        move_w = find_move_third_party_dhconnelly(board, 'W', depth=their_depth)
+        move_w = find_move_third_party_dhconnelly(board, 'B', depth=their_depth)
         if move_w is not None:
-            board.make_move(move_w, 'W', play_test=False)
+            board.make_move(move_w, 'B', play_test=False)
 
         if move_b is None and move_w is None:
             break
@@ -92,5 +92,5 @@ if __name__ == '__main__':
         winners = [play_against_dhconnelly(our_depth=our_depth, their_depth=their_depth) for _ in range(30)]
         print('our depth: {}, their depth: {}'.format(our_depth, their_depth))
         print(winners)
-        rate = win_rate(winners, 'B')
+        rate = win_rate(winners, 'W')
         print('Our win rate was {} out of {} games'.format(rate, len(winners)))
