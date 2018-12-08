@@ -1,35 +1,30 @@
 import copy
-import random
 
 def alphaBeta(state, depth, player):
 	legalMoves = state.get_legal_moves(player)
-	if not legalMoves:
-		return None
+	state.print()
+	print('Current Player: ', player)
+	print('All legal moves from this position: ', legalMoves)
 	bestScore = float("-inf") # Start as maxPlayer (you)
 	bestMove = None
 	alpha = float("-inf")
 	beta = float("inf")
-	opponent = state.get_opponent(player)
-	all_score_move_pairs = []
 	for move in legalMoves:
 		successor = copy.deepcopy(state)
 		successor.make_move(move, player, play_test=False)
-		score = minPlayer(successor, depth-1, alpha, beta, opponent) # Switch to opponent (minPlayer)
-		all_score_move_pairs.append((score, move))  # higher score is better.
+		score = minPlayer(successor, depth-1, alpha, beta, player) # Switch to opponent (minPlayer)
 		if score > alpha:
 			alpha = score # Update lower bound for maxPlayer
 		if bestMove is None or score > bestScore:
 			bestMove = move
 			bestScore = score
-
-	moves = [move for score, move in all_score_move_pairs if score == bestScore]
-	assert moves
-	return random.choice(moves)
-
+	return bestMove
+	
 def minPlayer(state, depth, a, b, player):
 	if depth == 0:
 		return heuristic(state, player)
 	legalMoves = state.get_legal_moves(player)
+	opponent = state.get_opponent(player)
 	if len(legalMoves) == 0:
 		return maxPlayer(state, depth-1, a, b, player) # If no legal moves, skip turn
 	bestScore = float("inf")
@@ -37,7 +32,7 @@ def minPlayer(state, depth, a, b, player):
 	beta = b
 	for move in legalMoves:
 		successor = copy.deepcopy(state)
-		successor.make_move(move, player, play_test=False)
+		successor.make_move(move, opponent, play_test=False)
 		score = maxPlayer(successor, depth-1, alpha, beta, player) # Switch to maxPlayer
 		if score < beta:
 			beta = score  # Update upper bound for minPlayer
@@ -46,21 +41,20 @@ def minPlayer(state, depth, a, b, player):
 		if score < bestScore:
 			bestScore = score
 	return bestScore
-
+	
 def maxPlayer(state, depth, a, b, player):
 	if depth == 0:
 		return heuristic(state, player)
 	legalMoves = state.get_legal_moves(player)
-	opponent = state.get_opponent(player)
 	if len(legalMoves) == 0:
-		return maxPlayer(state, depth-1, a, b, opponent) # If no legal moves, skip turn
+		return maxPlayer(state, depth-1, a, b, player) # If no legal moves, skip turn
 	bestScore = float("-inf")
 	alpha = a
 	beta = b
 	for move in legalMoves:
 		successor = copy.deepcopy(state)
 		successor.make_move(move, player, play_test=False)
-		score = minPlayer(successor, depth-1, alpha, beta, opponent) # Switch to minPlayer
+		score = minPlayer(successor, depth-1, alpha, beta, player) # Switch to minPlayer
 		if score > alpha:
 			alpha = score # Update lower bound for maxPlayer
 		if beta <= score:
@@ -68,7 +62,7 @@ def maxPlayer(state, depth, a, b, player):
 		if score > bestScore:
 			bestScore = score
 	return bestScore
-
+	
 def heuristic(state, player):
 	assert player in ('W', 'B')
 	if player == 'W':
