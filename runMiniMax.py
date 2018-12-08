@@ -1,5 +1,5 @@
 import othello
-
+import copy
 class MiniMax(object):
 
     @staticmethod
@@ -13,8 +13,11 @@ class MiniMax(object):
         minimax_move = None
         minimax_score = 0
 
+        initial_board = copy.deepcopy(board)
+
         for move in legal_moves:
             temp_score = 0
+            board = copy.deepcopy(initial_board)
             board.make_move(move, player, play_test=False)
             b_temp, w_temp = board.heuristic_weighted()
 
