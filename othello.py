@@ -174,6 +174,66 @@ class Board(object):
         else:
             return 'W'
 
+    def get_corner_disk_count(self):
+        n = self.board_size-1
+        corner_disks = []
+        corner_positions = [(0, 0), (0, n), (n, 0), (n, n)]
+        for pos in corner_positions:
+            corner_disks.append(self.data[pos[1]][pos[0]])
+
+        return corner_disks.count('B'), corner_disks.count('W')
+
+    def search_different_tile(self, yx, tile, dir):
+        y_cur, x_cur = yx
+        while self.is_on_board(x_cur, y_cur) and self.data[y_cur][x_cur] == tile:
+            y_cur, x_cur = y_cur + dir[0], x_cur + dir[1]
+
+        if not self.is_on_board(x_cur, y_cur):
+            return True
+
+        return False
+
+    def get_permanent_disk_count(self):
+        b_count = 0
+        w_count = 0
+
+        dir_pairs = [[[0, 1], [0, -1]], [[1, 0], [-1, 0]], [[1, 1], [-1, -1]], [[-1, 1], [1, -1]]]
+        for i in range(self.board_size):
+            for j in range(self.board_size):
+                tile = self.data[i][j]
+
+                if tile == '0':
+                    continue
+
+                is_permanent = True
+                for dir in dir_pairs:
+                    is_permanent = self.search_different_tile((i, j), tile, dir[0]) or self.search_different_tile((i, j), tile, dir[1])
+                    if not is_permanent:
+                        break
+
+                if is_permanent:
+                    if tile == 'B':
+                        b_count = b_count + 1
+                    else:
+                        w_count = w_count + 1
+
+        return b_count, w_count
+
+    def heuristic_count(self):
+        b_count, w_count = self.get_scores()
+        return b_count, w_count
+
+    def heuristic_numMoves(self):
+        b_count = len(self.get_legal_moves('B'))
+        w_count = len(self.get_legal_moves('W'))
+        return b_count, w_count
+
+    def heuristic_weighted(self):
+        b_score, w_score = self.heuristic_count()
+        b_perm, w_perm = self.get_permanent_disk_count()
+        b_moves, w_moves = self.heuristic_numMoves()
+        return b_score+b_perm+b_moves, w_score+w_perm+w_moves
+
 class Game(object):
     def __init__(self, board: Board):
         self.board = board
