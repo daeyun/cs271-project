@@ -460,8 +460,10 @@ float heuristic(const array<uint8_t, 64> &board, uint8_t player, int heuristic_t
     case 6: return weighted_parity_heuristic_2(board, player) + mobility_heuristic(board, player);
     case 7: return weighted_parity_heuristic_2(board, player) + 0.5f * mobility_heuristic(board, player);
     case 8:
-      return weighted_parity_heuristic_2(board, player) + mobility_heuristic(board, player)
-          + permanent_disk_heuristic(board, player);
+      return weighted_parity_heuristic_2(board, player) * 4 + mobility_heuristic(board, player) * 5
+          + permanent_disk_heuristic(board, player) * 6;
+//      return weighted_parity_heuristic_1(board, player) * 0.5 + mobility_heuristic(board, player) * 4
+//          + permanent_disk_heuristic(board, player) * 4;
     default: return 0; // random
   }
 }
@@ -476,7 +478,8 @@ float minimax(const array<uint8_t, 64> &board, uint8_t player, int depth, int he
   auto opponent = get_opponent(player);
   if (moves.empty() and !any_valid_move(board, opponent)) {
     // Terminal node. Game ending condition.
-    return heuristic(board, player, heuristic_type);
+//    return heuristic(board, player, heuristic_type);
+    return static_cast<float>((parity_heuristic(board, player) > 0) ? 1 : -1) * 10000;
   }
 
   float best = -kInfinity;
@@ -485,6 +488,10 @@ float minimax(const array<uint8_t, 64> &board, uint8_t player, int depth, int he
     apply_move(&next_board, player, move_pos);
     best = std::max(best, -minimax(next_board, opponent, depth - 1, heuristic_type));
   }
+  if (best == -kInfinity) {
+    best = -minimax(board, opponent, depth - 1, heuristic_type);
+  }
+
   return best;
 }
 
@@ -499,7 +506,8 @@ float minimax_ab(const array<uint8_t, 64> &board, uint8_t player, int depth,
   auto opponent = get_opponent(player);
   if (moves.empty() and !any_valid_move(board, opponent)) {
     // Terminal node. Game ending condition.
-    return heuristic(board, player, heuristic_type);
+//    return heuristic(board, player, heuristic_type);
+    return static_cast<float>((parity_heuristic(board, player) > 0) ? 1 : -1) * 10000;
   }
 
   order_moves(&moves);
@@ -513,6 +521,9 @@ float minimax_ab(const array<uint8_t, 64> &board, uint8_t player, int depth,
     if (alpha >= beta) {
       break;
     }
+  }
+  if (best == -kInfinity) {
+    best = -minimax_ab(board, opponent, depth - 1, -beta, -alpha, heuristic_type);
   }
   return best;
 }
@@ -556,7 +567,8 @@ float minimax_ab_transposition(const array<uint8_t, 64> &board,
   auto opponent = get_opponent(player);
   if (moves.empty() and !any_valid_move(board, opponent)) {
     // Terminal node. Game ending condition.
-    return heuristic(board, player, heuristic_type);
+//    return heuristic(board, player, heuristic_type);
+    return static_cast<float>((parity_heuristic(board, player) > 0) ? 1 : -1) * 10000;
   }
 
   order_moves(&moves);
@@ -571,6 +583,9 @@ float minimax_ab_transposition(const array<uint8_t, 64> &board,
     if (alpha >= beta) {
       break;
     }
+  }
+  if (best == -kInfinity) {
+    best = -minimax_ab_transposition(board, opponent, depth - 1, -beta, -alpha, heuristic_type, table);
   }
 
   // Add new entry.
@@ -592,10 +607,10 @@ bool search_next_move(const array<uint8_t, 64> &board, uint8_t player, int depth
                       const std::function<float(const array<uint8_t, 64> &board, uint8_t player,
                                                 int depth)> &searcher, Position *next_move) {
   vector<Position> moves;
-  vector<float> values;
   float best = -kInfinity;
   auto opponent = get_opponent(player);
   if (find_valid_moves(board, player, &moves) > 0) {
+    vector<float> values(moves.size());
 
 #pragma omp parallel for schedule(auto)
     for (int j = 0; j < moves.size(); ++j) {
@@ -609,8 +624,8 @@ bool search_next_move(const array<uint8_t, 64> &board, uint8_t player, int depth
         if (value > best) {
           best = value;
         }
-        values.push_back(value);
       };
+      values[j] = value;
     }
 
     std::vector<Position> best_moves;

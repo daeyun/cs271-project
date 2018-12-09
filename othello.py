@@ -1,4 +1,6 @@
 import re
+import numpy as np
+import matplotlib.pyplot as pt
 
 
 class Board(object):
@@ -12,6 +14,7 @@ class Board(object):
         self.num_whites = 0
         self.num_blacks = 0
         self.turns_played = 0
+        self.most_recent_move = None
 
         if symbols is not None:
             assert len(symbols) == self.board_size ** 2
@@ -63,6 +66,34 @@ class Board(object):
 
         print('Number of Black Pieces: ', self.num_blacks)
         print('Number of White Pieces: ', self.num_whites)
+
+    def plot(self, ax):
+        ax.clear()
+        for i_row, row in enumerate(self.data):
+            for i_col, item in enumerate(row):
+                xy = (i_col, i_row)
+                symbol = self.get_symbol(xy)
+                if symbol == '0':
+                    continue
+                color = 'black' if symbol == 'B' else 'white'
+                if xy == self.most_recent_move:
+                    ax.scatter(x=i_col + 0.5, y=i_row + 0.5, marker='o', s=350, color='red')
+                ax.scatter(x=i_col + 0.5, y=i_row + 0.5, marker='o', s=150, color=color, edgecolor='black')
+
+        ax.set_xticks(np.arange(0, 9))
+        ax.set_yticks(np.arange(0, 9))
+        ax.set_xticks(np.arange(0, 9) + 0.5, minor=True)
+        ax.set_yticks(np.arange(0, 9) + 0.5, minor=True)
+        ax.set_xticklabels(np.arange(0, 9), minor=True)
+        ax.set_yticklabels(np.arange(0, 9), minor=True)
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        ax.xaxis.set_ticks_position('top')
+        ax.grid()
+        ax.set_xlim(0, 8)
+        ax.set_ylim(0, 8)
+        ax.set_aspect('equal')
+        ax.invert_yaxis()
 
     def get_opponent(self, player):
         assert player in ('W', 'B')
@@ -124,6 +155,8 @@ class Board(object):
                 self.num_blacks += 1  # Increase by 1 for tile placed on board
                 self.num_blacks += num_tiles_converted  # Increase again for each tile flipped
                 self.num_whites -= num_tiles_converted  # Opponent loses those number of pieces
+
+        self.most_recent_move = xy
 
         return len(flip_tiles)
 
@@ -254,6 +287,15 @@ class Board(object):
 class Game(object):
     def __init__(self, board: Board):
         self.board = board
+
+        for i in range(8):
+            for j in range(8):
+                self.board.force_place_symbol((i, j), '0')
+
+        self.board.force_place_symbol((3, 3), 'W')
+        self.board.force_place_symbol((4, 4), 'W')
+        self.board.force_place_symbol((3, 4), 'B')
+        self.board.force_place_symbol((4, 3), 'B')
 
     def get_user_input_string(self) -> str:
         input_string = input('Make move (x, y): ')

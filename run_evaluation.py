@@ -151,6 +151,13 @@ def play_against_our_baseline(our_depth=3, their_depth=3):
     return board.get_winner(), total_runtime, total_runtime_theirs
 
 
+def runtime_fixed_board(depth):
+    board = othello.Board('..................B..B....BWBW...WWWWW....BBBWW.................'.replace('.', '0'))
+    _, elapsed_seconds = othello_ctypes.best_move(board_conversion.convert_to_our_cpp_board(board), player='B',
+                                                  strategy='all', depth=depth)
+    return elapsed_seconds
+
+
 def win_rate(result, player):
     assert isinstance(result, (list, tuple))
     assert player in ('W', 'B')
@@ -168,7 +175,6 @@ def win_rate(result, player):
 
 def winrate_benchmark1():
     for our_depth, their_depth in [(2, 2), (3, 2), (4, 2), (5, 2)]:
-        random.seed(42)  # To make this reproducible, set random seed.
         winners = [play_against_dhconnelly_use_cpp(our_depth=our_depth, their_depth=their_depth)[0] for _ in range(50)]
         print('our depth: {}, their depth: {}'.format(our_depth, their_depth))
         print(winners)
@@ -177,9 +183,17 @@ def winrate_benchmark1():
 
 
 def winrate_benchmark2():
-    for our_depth, their_depth in [(5, 5), ]:
-        random.seed(42)  # To make this reproducible, set random seed.
+    for our_depth, their_depth in [(3, 7), ]:
         winners = [play_against_our_baseline(our_depth=our_depth, their_depth=their_depth)[0] for _ in range(50)]
+        print('our depth: {}, their depth: {}'.format(our_depth, their_depth))
+        print(winners)
+        rate = win_rate(winners, 'B')
+        print('Our win rate was {} out of {} games'.format(rate, len(winners)))
+
+
+def winrate_benchmark3():
+    for our_depth, their_depth in [(2, 2), ]:
+        winners = [play_against_dhconnelly_use_cpp(our_depth=our_depth, their_depth=their_depth)[0] for _ in range(100)]
         print('our depth: {}, their depth: {}'.format(our_depth, their_depth))
         print(winners)
         rate = win_rate(winners, 'B')
@@ -196,6 +210,12 @@ def runtime_benchmark():
     print('Theirs: {:.5f} seconds'.format(np.mean(total_runtimes[:, 1])))
 
 
+def runtime_benchmark2():
+    depth = 8
+    total_runtimes = [runtime_fixed_board(depth=depth) for _ in range(10)]
+    print('(depth {}): {:.5f} seconds'.format(depth, np.mean(total_runtimes)))
+
+
 if __name__ == '__main__':
-    # runtime_benchmark()
-    winrate_benchmark2()
+    runtime_benchmark2()
+    # winrate_benchmark2()
