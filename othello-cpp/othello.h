@@ -16,6 +16,8 @@ using std::vector;
 #define BLACK 0
 #define WHITE 1
 
+constexpr float kInfinity = std::numeric_limits<float>::infinity();
+
 enum class Direction {
   UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT
 };
@@ -175,6 +177,26 @@ int find_valid_moves(const array<uint8_t, 64> &board, uint8_t player, vector<Pos
   return num_found;
 }
 
+bool any_valid_move(const array<uint8_t, 64> &board, uint8_t player) {
+  int num_found = 0;
+  for (int y = 0; y < 8; ++y) {
+    for (int x = 0; x < 8; ++x) {
+      // Valid move position must be empty.
+      if (board[x + y * 8] != EMPTY) {
+        continue;
+      }
+      Position pos{
+          .x = static_cast<uint8_t>(x),
+          .y = static_cast<uint8_t>(y),
+      };
+      if (is_valid_move(board, player, pos)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 // Assumes `move_pos` is valid.
 void apply_move(array<uint8_t, 64> *board, uint8_t player, Position move_pos) {
   Direction directions[] = {
@@ -235,37 +257,62 @@ int weighted_sum_heuristic(const array<uint8_t, 64> &board, uint8_t player) {
   return ret;
 }
 
-int minimax(const array<uint8_t, 64> &board, uint8_t player, int depth) {
-  // This is the Negamax variant.
+// https://en.wikipedia.org/wiki/Negamax#Negamax_base_algorithm
+float minimax(const array<uint8_t, 64> &board, uint8_t player, int depth) {
   if (depth <= 0) {
     return weighted_sum_heuristic(board, player);
   }
-
   vector<Position> moves;
-  int best = std::numeric_limits<int>::min();
+  find_valid_moves(board, player, &moves);
   auto opponent = get_opponent(player);
-  if (find_valid_moves(board, player, &moves) > 0) {
-    for (const auto &move_pos : moves) {
-      array<uint8_t, 64> next_board = board;
-      apply_move(&next_board, player, move_pos);
-      auto value = -minimax(next_board, opponent, depth - 1);
-      if (value > best) {
-        best = value;
-      }
+  if (moves.empty() and !any_valid_move(board, opponent)) {
+    // Terminal node. Game ending condition.
+    return weighted_sum_heuristic(board, player);
+  }
+
+  float best = -kInfinity;
+  for (const auto &move_pos : moves) {
+    array<uint8_t, 64> next_board = board;
+    apply_move(&next_board, player, move_pos);
+    best = std::max(best, -minimax(next_board, opponent, depth - 1));
+  }
+  return best;
+}
+
+// https://en.wikipedia.org/wiki/Negamax#Negamax_with_alpha_beta_pruning
+float minimax_ab(const array<uint8_t, 64> &board, uint8_t player, int depth, float alpha, float beta) {
+  if (depth <= 0) {
+    return weighted_sum_heuristic(board, player);
+  }
+  vector<Position> moves;
+  find_valid_moves(board, player, &moves);
+  auto opponent = get_opponent(player);
+  if (moves.empty() and !any_valid_move(board, opponent)) {
+    // Terminal node. Game ending condition.
+    return weighted_sum_heuristic(board, player);
+  }
+
+  // TODO: Move ordering
+
+  float best = -kInfinity;
+  for (const auto &move_pos : moves) {
+    array<uint8_t, 64> next_board = board;
+    apply_move(&next_board, player, move_pos);
+    best = std::max(best, -minimax_ab(next_board, opponent, depth - 1, -beta, -alpha));
+    alpha = std::max(alpha, best);
+    if (alpha >= beta) {
+      break;
     }
-  } else {
-    // No valid moves. Pass the turn without making a move.
-    return -minimax(board, opponent, depth - 1);
   }
   return best;
 }
 
 bool search_next_move(const array<uint8_t, 64> &board, uint8_t player, int depth,
-                      const std::function<int(const array<uint8_t, 64> &board, uint8_t player,
-                                              int depth)> &searcher, Position *next_move) {
+                      const std::function<float(const array<uint8_t, 64> &board, uint8_t player,
+                                                int depth)> &searcher, Position *next_move) {
   vector<Position> moves;
-  vector<int> values;
-  int best = std::numeric_limits<int>::min();
+  vector<float> values;
+  float best = -kInfinity;
   auto opponent = get_opponent(player);
   if (find_valid_moves(board, player, &moves) > 0) {
     for (const auto &move_pos : moves) {

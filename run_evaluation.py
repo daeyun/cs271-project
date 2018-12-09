@@ -10,6 +10,7 @@ import othello_ctypes
 
 minimax = runMiniMax.MiniMax()
 
+
 def find_move_third_party_dhconnelly(board: othello.Board, player_color: str, depth: int):
     """
     Implementation from http://dhconnelly.com/paip-python/docs/paip/othello.html
@@ -42,7 +43,7 @@ def find_move_third_party_dhconnelly(board: othello.Board, player_color: str, de
 
 
 def find_move_ours(board, player_color, depth):
-    #move = alphaBeta(state=board, depth=depth, player=player_color)
+    # move = alphaBeta(state=board, depth=depth, player=player_color)
     move = minimax.minimax_search(board, player_color, depth=depth)
     return move
 
@@ -122,7 +123,7 @@ def win_rate(result, player):
 
 
 if __name__ == '__main__':
-    for our_depth, their_depth in [(2, 2), (3, 2), (4, 2)]:
+    for our_depth, their_depth in [(2, 2), (3, 2), (4, 2), (5, 2)]:
         random.seed(42)  # To make this reproducible, set random seed.
         winners = [play_against_dhconnelly_use_cpp(our_depth=our_depth, their_depth=their_depth) for _ in range(50)]
         print('our depth: {}, their depth: {}'.format(our_depth, their_depth))
