@@ -12,8 +12,8 @@ TEST_CASE("IsValidMove", "invalid move") {
 
 TEST_CASE("Heuristics", "weighted sum") {
   array<uint8_t, 64> board = board_from_string("..................WBBW....WBWB....WBB.....WWWW.....BW.....WB.W..");
-  REQUIRE(-92 == weighted_sum_heuristic(board, BLACK));
-  REQUIRE(92 == weighted_sum_heuristic(board, WHITE));
+  REQUIRE(-92 == weighted_parity_heuristic_1(board, BLACK));
+  REQUIRE(92 == weighted_parity_heuristic_1(board, WHITE));
 }
 
 TEST_CASE("ApplyMove", "flip") {

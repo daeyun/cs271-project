@@ -141,7 +141,7 @@ def winrate_benchmark():
 
 
 def runtime_benchmark():
-    total_runtimes = [play_against_dhconnelly_use_cpp(our_depth=5, their_depth=5)[1:] for _ in range(10)]
+    total_runtimes = [play_against_dhconnelly_use_cpp(our_depth=5, their_depth=1)[1:] for _ in range(30)]
     total_runtimes = np.array(total_runtimes)
 
     print(total_runtimes.shape)
@@ -152,3 +152,4 @@ def runtime_benchmark():
 
 if __name__ == '__main__':
     runtime_benchmark()
+    # winrate_benchmark()

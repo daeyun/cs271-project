@@ -185,11 +185,34 @@ int find_valid_moves(const array<uint8_t, 64> &board, uint8_t player, vector<Pos
       };
       if (is_valid_move(board, player, pos)) {
         ++num_found;
-        moves->push_back(pos);
+        if (moves) {
+          moves->push_back(pos);
+        }
       }
     }
   }
   return num_found;
+}
+
+void order_moves(vector<Position> *moves) {
+  // Same weights as:
+  // https://github.com/dhconnelly/paip-python/blob/master/paip/othello.py
+  static int weights[] = {
+      120, -20, 20, 5, 5, 20, -20, 120,
+      -20, -40, -5, -5, -5, -5, -40, -20,
+      20, -5, 15, 3, 3, 15, -5, 20,
+      5, -5, 3, 3, 3, 3, -5, 5,
+      5, -5, 3, 3, 3, 3, -5, 5,
+      20, -5, 15, 3, 3, 15, -5, 20,
+      -20, -40, -5, -5, -5, -5, -40, -20,
+      120, -20, 20, 5, 5, 20, -20, 120,
+  };
+
+  std::sort(moves->begin(), moves->end(), [](const Position &a, const Position &b) {
+    return weights[a.x + a.y * 8] > weights[b.x + b.y * 8];
+  });
+
+//  std::shuffle(moves->begin(), moves->end(), RandomEngine());
 }
 
 bool any_valid_move(const array<uint8_t, 64> &board, uint8_t player) {
@@ -247,7 +270,9 @@ void apply_move(array<uint8_t, 64> *board, uint8_t player, Position move_pos) {
 
 }
 
-int weighted_sum_heuristic(const array<uint8_t, 64> &board, uint8_t player) {
+int weighted_parity_heuristic_1(const array<uint8_t, 64> &board, uint8_t player) {
+  // Same weights as:
+  // https://github.com/dhconnelly/paip-python/blob/master/paip/othello.py
   static int weights[] = {
       120, -20, 20, 5, 5, 20, -20, 120,
       -20, -40, -5, -5, -5, -5, -40, -20,
@@ -272,17 +297,63 @@ int weighted_sum_heuristic(const array<uint8_t, 64> &board, uint8_t player) {
   return ret;
 }
 
+int weighted_parity_heuristic_2(const array<uint8_t, 64> &board, uint8_t player) {
+  static int weights[] = {
+      4, -3, 2, 2, 2, 2, -3, 4,
+      -3, -4, -1, -1, -1, -1, -4, -3,
+      2, -1, 1, 0, 0, 1, -1, 2,
+      2, -1, 0, 1, 1, 0, -1, 2,
+      2, -1, 0, 1, 1, 0, -1, 2,
+      2, -1, 1, 0, 0, 1, -1, 2,
+      -3, -4, -1, -1, -1, -1, -4, -3,
+      4, -3, 2, 2, 2, 2, -3, 4
+  };
+
+  int ret = 0;
+  auto opponent = get_opponent(player);
+  for (int i = 0; i < 64; ++i) {
+    const auto value = board[i];
+    if (value == player) {
+      ret += weights[i];
+    } else if (value == opponent) {
+      ret -= weights[i];
+    }
+  }
+  return ret;
+}
+
+int parity_heuristic(const array<uint8_t, 64> &board, uint8_t player) {
+  int ret = 0;
+  auto opponent = get_opponent(player);
+  for (int i = 0; i < 64; ++i) {
+    const auto value = board[i];
+    if (value == player) {
+      ret += 1;
+    } else if (value == opponent) {
+      ret -= 1;
+    }
+  }
+  return ret;
+}
+
+int mobility_heuristic(const array<uint8_t, 64> &board, uint8_t player) {
+  // Number of possible moves.
+  int num_valid_moves_player = find_valid_moves(board, player, nullptr);
+  int num_valid_moves_opponent = find_valid_moves(board, get_opponent(player), nullptr);
+  return num_valid_moves_player - num_valid_moves_opponent;
+}
+
 // https://en.wikipedia.org/wiki/Negamax#Negamax_base_algorithm
 float minimax(const array<uint8_t, 64> &board, uint8_t player, int depth) {
   if (depth <= 0) {
-    return weighted_sum_heuristic(board, player);
+    return weighted_parity_heuristic_1(board, player);
   }
   vector<Position> moves;
   find_valid_moves(board, player, &moves);
   auto opponent = get_opponent(player);
   if (moves.empty() and !any_valid_move(board, opponent)) {
     // Terminal node. Game ending condition.
-    return weighted_sum_heuristic(board, player);
+    return weighted_parity_heuristic_1(board, player);
   }
 
   float best = -kInfinity;
@@ -297,17 +368,17 @@ float minimax(const array<uint8_t, 64> &board, uint8_t player, int depth) {
 // https://en.wikipedia.org/wiki/Negamax#Negamax_with_alpha_beta_pruning
 float minimax_ab(const array<uint8_t, 64> &board, uint8_t player, int depth, float alpha, float beta) {
   if (depth <= 0) {
-    return weighted_sum_heuristic(board, player);
+    return weighted_parity_heuristic_1(board, player);
   }
   vector<Position> moves;
   find_valid_moves(board, player, &moves);
   auto opponent = get_opponent(player);
   if (moves.empty() and !any_valid_move(board, opponent)) {
     // Terminal node. Game ending condition.
-    return weighted_sum_heuristic(board, player);
+    return weighted_parity_heuristic_1(board, player);
   }
 
-  // TODO: Move ordering
+  order_moves(&moves);
 
   float best = -kInfinity;
   for (const auto &move_pos : moves) {
@@ -322,6 +393,7 @@ float minimax_ab(const array<uint8_t, 64> &board, uint8_t player, int depth, flo
   return best;
 }
 
+// https://en.wikipedia.org/wiki/Negamax#Negamax_with_alpha_beta_pruning_and_transposition_tables
 float minimax_ab_transposition(const array<uint8_t, 64> &board,
                                uint8_t player,
                                int depth,
@@ -329,7 +401,7 @@ float minimax_ab_transposition(const array<uint8_t, 64> &board,
                                float beta,
                                unordered_map<string, TTEntry> *table) {
   if (depth <= 0) {
-    return weighted_sum_heuristic(board, player);
+    return weighted_parity_heuristic_1(board, player);
   }
 
   float alpha_orig = alpha;
@@ -359,10 +431,10 @@ float minimax_ab_transposition(const array<uint8_t, 64> &board,
   auto opponent = get_opponent(player);
   if (moves.empty() and !any_valid_move(board, opponent)) {
     // Terminal node. Game ending condition.
-    return weighted_sum_heuristic(board, player);
+    return weighted_parity_heuristic_1(board, player);
   }
 
-  // TODO: Move ordering
+  order_moves(&moves);
 
   float best = -kInfinity;
   for (const auto &move_pos : moves) {
