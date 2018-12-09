@@ -50,12 +50,14 @@ def main():
     game.board.print()  # Print empty board
 
     turn = 0
+    total_elapsed_seconds = 0
 
     while True:
         computer_xy, elapsed_seconds = othello_ctypes.best_move(
             board_conversion.convert_to_our_cpp_board(game.board), player='B', strategy='all',
             depth=search_depth_at_turn(turn))
         print(computer_xy, elapsed_seconds)
+        total_elapsed_seconds += elapsed_seconds
         if computer_xy is not None:
             game.board.make_move(computer_xy, 'B', play_test=False)
             game.board.print()  # Print after placing the W symbol.
@@ -79,6 +81,7 @@ def main():
             break
 
     print(game.board.get_winner() + ' wins!')
+    print('Total run time: {} seconds'.format(total_elapsed_seconds))
     return game.board.get_winner()
 
 
@@ -92,13 +95,14 @@ def main_gui():
     ax = open_window()
 
     turn = 0
+    total_elapsed_seconds = 0
 
     while True:
         computer_xy, elapsed_seconds = othello_ctypes.best_move(
             board_conversion.convert_to_our_cpp_board(game.board), player='B', strategy='all',
             depth=search_depth_at_turn(turn))
-        # computer_xy, elapsed_seconds = find_move_third_party_dhconnelly(game.board, 'B', depth=5)
         print(computer_xy, elapsed_seconds)
+        total_elapsed_seconds += elapsed_seconds
         if computer_xy is not None:
             game.board.make_move(computer_xy, 'B', play_test=False)
             game.board.print()  # Print after placing the W symbol.
@@ -128,6 +132,7 @@ def main_gui():
             break
 
     print(game.board.get_winner() + ' wins!')
+    print('Total run time: {} seconds'.format(total_elapsed_seconds))
     return game.board.get_winner()
 
 
