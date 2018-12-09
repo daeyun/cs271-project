@@ -16,6 +16,10 @@ void best_move(const char *board_str, uint8_t player, uint8_t strategy, uint8_t 
   const auto searcher = [&](const array<uint8_t, 64> &board, uint8_t player, int depth) -> float {
     return -minimax_ab(board, player, depth, -kInfinity, kInfinity);
   };
+//  auto searcher = [&](const array<uint8_t, 64> &board, uint8_t player, int depth) -> float {
+//    unordered_map<string, TTEntry> table;
+//    return -minimax_ab_transposition(board, player, depth, -kInfinity, kInfinity, &table);
+//  };
 
   Position next_move{};
   bool has_next_move = search_next_move(board, player, depth, searcher, &next_move);
@@ -24,4 +28,3 @@ void best_move(const char *board_str, uint8_t player, uint8_t strategy, uint8_t 
     *out_y = next_move.y;
   }
 }
-

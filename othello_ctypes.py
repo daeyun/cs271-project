@@ -1,4 +1,5 @@
 import ctypes
+import time
 from os import path
 from sys import platform
 from ctypes import cdll
@@ -40,7 +41,7 @@ def best_move(board, player, strategy, depth):
 
     assert player in player_indices
     assert strategy in strategy_indices
-    assert depth > 0 and depth < 64, depth
+    assert 0 < depth < 64, depth
 
     arg_board = ctypes.c_char_p(board.encode('utf-8'))
 
@@ -51,12 +52,14 @@ def best_move(board, player, strategy, depth):
     arg_x = ctypes.c_uint8(255)
     arg_y = ctypes.c_uint8(255)
 
+    start_time = time.time()
     c_func(
         arg_board, arg_player, arg_strategy, arg_depth, arg_x, arg_y
     )
+    elapsed = time.time() - start_time
 
     x, y = arg_x.value, arg_y.value
 
     if x == 255 or y == 255:
-        return None
-    return x, y
+        return None, elapsed
+    return (x, y), elapsed

@@ -255,3 +255,53 @@ TEST_CASE("Minimax with alpha beta pruning. Depth 5", "check sorted costs") {
   REQUIRE(moves[3].x == 5);
   REQUIRE(moves[3].y == 4);
 }
+
+TEST_CASE("Minimax with alpha beta pruning and lookup table. Depth 5", "check sorted costs") {
+  auto searcher = [&](const array<uint8_t, 64> &board, uint8_t player, int depth) -> float {
+    unordered_map<string, TTEntry> table;
+    return -minimax_ab_transposition(board, player, depth, -kInfinity, kInfinity, &table);
+  };
+
+  uint8_t player = BLACK;
+  array<uint8_t, 64> board = board_from_string("..................WBBW....WBWB....WBB.....WWWW.....BW.....WB.W..");
+  int depth = 5;
+
+  vector<Position> moves;
+  vector<float> values;
+  float best = -std::numeric_limits<float>::infinity();
+  auto opponent = get_opponent(player);
+  if (find_valid_moves(board, player, &moves) > 0) {
+    for (const auto &move_pos : moves) {
+      array<uint8_t, 64> next_board = board;
+      apply_move(&next_board, player, move_pos);
+      auto value = searcher(next_board, opponent, depth - 1);
+
+      if (value > best) {
+        best = value;
+      }
+      values.push_back(value);
+    }
+  }
+
+  auto p = sort_permutation(values, [](int const &a, int const &b) { return a > b; });
+
+  values = apply_permutation(values, p);
+  moves = apply_permutation(moves, p);
+
+  REQUIRE(values.size() == 16);
+  REQUIRE(moves.size() == 16);
+
+  REQUIRE(values[0] == -39);
+  REQUIRE(values[1] == -39);
+  REQUIRE(values[2] == -42);
+  REQUIRE(values[3] == -47);
+  REQUIRE(values[4] == -54);
+  REQUIRE(values[5] == -55);
+  REQUIRE(values[6] == -57);
+  REQUIRE(values[15] == -131);
+
+  REQUIRE(moves[2].x == 1);
+  REQUIRE(moves[2].y == 7);
+  REQUIRE(moves[3].x == 5);
+  REQUIRE(moves[3].y == 4);
+}

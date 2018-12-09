@@ -8,9 +8,14 @@
 #include <limits>
 #include <random>
 #include <algorithm>
+#include <map>
+#include <unordered_map>
 
 using std::array;
 using std::vector;
+using std::map;
+using std::string;
+using std::unordered_map;
 
 #define EMPTY 255
 #define BLACK 0
@@ -24,6 +29,16 @@ enum class Direction {
 
 struct Position {
   uint8_t x, y;
+};
+
+enum class TTFlag {
+  UPPERBOUND, LOWERBOUND, EXACT
+};
+
+struct TTEntry {
+  float value;
+  TTFlag flag;
+  uint8_t depth;
 };
 
 static std::mt19937 &RandomEngine() {
@@ -304,6 +319,74 @@ float minimax_ab(const array<uint8_t, 64> &board, uint8_t player, int depth, flo
       break;
     }
   }
+  return best;
+}
+
+float minimax_ab_transposition(const array<uint8_t, 64> &board,
+                               uint8_t player,
+                               int depth,
+                               float alpha,
+                               float beta,
+                               unordered_map<string, TTEntry> *table) {
+  if (depth <= 0) {
+    return weighted_sum_heuristic(board, player);
+  }
+
+  float alpha_orig = alpha;
+
+  const string board_str(reinterpret_cast<const char *>(board.data()), 64);
+  auto it = table->find(board_str);
+  bool is_valid_lookup = it != table->end();
+  if (is_valid_lookup) {
+    auto tt_entry = it->second;
+    if (tt_entry.depth >= depth) {
+      if (tt_entry.flag == TTFlag::EXACT) {
+        return tt_entry.value;
+      } else if (tt_entry.flag == TTFlag::LOWERBOUND) {
+        alpha = std::max(alpha, tt_entry.value);
+      } else {  // UPPERBOUND
+        beta = std::min(beta, tt_entry.value);
+      }
+
+      if (alpha >= beta) {
+        return tt_entry.value;
+      }
+    }
+  }
+
+  vector<Position> moves;
+  find_valid_moves(board, player, &moves);
+  auto opponent = get_opponent(player);
+  if (moves.empty() and !any_valid_move(board, opponent)) {
+    // Terminal node. Game ending condition.
+    return weighted_sum_heuristic(board, player);
+  }
+
+  // TODO: Move ordering
+
+  float best = -kInfinity;
+  for (const auto &move_pos : moves) {
+    array<uint8_t, 64> next_board = board;
+    apply_move(&next_board, player, move_pos);
+    best = std::max(best, -minimax_ab_transposition(next_board, opponent, depth - 1, -beta, -alpha, table));
+    alpha = std::max(alpha, best);
+    if (alpha >= beta) {
+      break;
+    }
+  }
+
+  // Add new entry.
+  auto &tt_entry = (*table)[board_str];
+  tt_entry.value = best;
+  if (best <= alpha_orig) {
+    tt_entry.flag = TTFlag::UPPERBOUND;
+  } else if (best >= beta) {
+    tt_entry.flag = TTFlag::LOWERBOUND;
+  } else {
+    tt_entry.flag = TTFlag::EXACT;
+  }
+  tt_entry.depth = static_cast<uint8_t>(depth);  // Assume depth < 256.
+
   return best;
 }
 
