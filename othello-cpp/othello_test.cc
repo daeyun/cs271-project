@@ -52,7 +52,7 @@ std::vector<T> apply_permutation(
 
 TEST_CASE("Minimax Depth 1", "check sorted costs") {
   auto searcher = [&](const array<uint8_t, 64> &board, uint8_t player, int depth) -> float {
-    return -minimax(board, player, depth);
+    return -minimax(board, player, depth, 0);
   };
 
   uint8_t player = BLACK;
@@ -101,7 +101,7 @@ TEST_CASE("Minimax Depth 1", "check sorted costs") {
 
 TEST_CASE("Minimax Depth 2", "check sorted costs") {
   auto searcher = [&](const array<uint8_t, 64> &board, uint8_t player, int depth) -> float {
-    return -minimax(board, player, depth);
+    return -minimax(board, player, depth, 0);
   };
 
   uint8_t player = BLACK;
@@ -151,7 +151,7 @@ TEST_CASE("Minimax Depth 2", "check sorted costs") {
 
 TEST_CASE("Minimax Depth 5", "check sorted costs") {
   auto searcher = [&](const array<uint8_t, 64> &board, uint8_t player, int depth) -> float {
-    return -minimax(board, player, depth);
+    return -minimax(board, player, depth, 0);
   };
 
   uint8_t player = BLACK;
@@ -209,7 +209,7 @@ TEST_CASE("Minimax Depth 5", "check sorted costs") {
 
 TEST_CASE("Minimax with alpha beta pruning. Depth 5", "check sorted costs") {
   auto searcher = [&](const array<uint8_t, 64> &board, uint8_t player, int depth) -> float {
-    return -minimax_ab(board, player, depth, -kInfinity, kInfinity);
+    return -minimax_ab(board, player, depth, -kInfinity, kInfinity, 0);
   };
 
   uint8_t player = BLACK;
@@ -259,7 +259,7 @@ TEST_CASE("Minimax with alpha beta pruning. Depth 5", "check sorted costs") {
 TEST_CASE("Minimax with alpha beta pruning and lookup table. Depth 5", "check sorted costs") {
   auto searcher = [&](const array<uint8_t, 64> &board, uint8_t player, int depth) -> float {
     unordered_map<string, TTEntry> table;
-    return -minimax_ab_transposition(board, player, depth, -kInfinity, kInfinity, &table);
+    return -minimax_ab_transposition(board, player, depth, -kInfinity, kInfinity, 0, &table);
   };
 
   uint8_t player = BLACK;

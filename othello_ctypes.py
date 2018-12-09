@@ -36,7 +36,16 @@ def best_move(board, player, strategy, depth):
         'W': 1,
     }
     strategy_indices = {
-        'minimax': 0,
+        'weighted_parity_1': 0,
+        'weighted_parity_2': 1,
+        'weighted_parity_3': 2,
+        'parity': 3,
+        'mobility': 4,
+        'perm_disk': 5,
+        'weighted_parity_and_mobility_1': 6,
+        'weighted_parity_and_mobility_2': 7,
+        'all': 8,
+        'random': 255,
     }
 
     assert player in player_indices

@@ -98,12 +98,48 @@ def play_against_dhconnelly_use_cpp(our_depth=3, their_depth=3):
 
     while True:
         move_b, elapsed_seconds = othello_ctypes.best_move(board_conversion.convert_to_our_cpp_board(board), player='B',
-                                                           strategy='minimax', depth=our_depth)
+                                                           strategy='all', depth=our_depth)
         total_runtime += elapsed_seconds
         if move_b is not None:
             board.make_move(move_b, 'B', play_test=False)
 
         move_w, elapsed_seconds = find_move_third_party_dhconnelly(board, 'W', depth=their_depth)
+        total_runtime_theirs += elapsed_seconds
+        if move_w is not None:
+            board.make_move(move_w, 'W', play_test=False)
+
+        if move_b is None and move_w is None:
+            break
+
+    print(board.get_winner() + ' wins!')
+    return board.get_winner(), total_runtime, total_runtime_theirs
+
+
+def play_against_our_baseline(our_depth=3, their_depth=3):
+    board = othello.Board()
+
+    for i in range(8):
+        for j in range(8):
+            board.force_place_symbol((i, j), '0')
+
+    board.force_place_symbol((3, 3), 'B')
+    board.force_place_symbol((4, 4), 'B')
+
+    board.force_place_symbol((3, 4), 'W')
+    board.force_place_symbol((4, 3), 'W')
+
+    total_runtime = 0
+    total_runtime_theirs = 0
+
+    while True:
+        move_b, elapsed_seconds = othello_ctypes.best_move(board_conversion.convert_to_our_cpp_board(board),
+                                                           player='B', strategy='all', depth=our_depth)
+        total_runtime += elapsed_seconds
+        if move_b is not None:
+            board.make_move(move_b, 'B', play_test=False)
+
+        move_w, elapsed_seconds = othello_ctypes.best_move(board_conversion.convert_to_our_cpp_board(board),
+                                                           player='W', strategy='weighted_parity_1', depth=their_depth)
         total_runtime_theirs += elapsed_seconds
         if move_w is not None:
             board.make_move(move_w, 'W', play_test=False)
@@ -130,7 +166,7 @@ def win_rate(result, player):
         return b_wins / len(result)
 
 
-def winrate_benchmark():
+def winrate_benchmark1():
     for our_depth, their_depth in [(2, 2), (3, 2), (4, 2), (5, 2)]:
         random.seed(42)  # To make this reproducible, set random seed.
         winners = [play_against_dhconnelly_use_cpp(our_depth=our_depth, their_depth=their_depth)[0] for _ in range(50)]
@@ -140,8 +176,18 @@ def winrate_benchmark():
         print('Our win rate was {} out of {} games'.format(rate, len(winners)))
 
 
+def winrate_benchmark2():
+    for our_depth, their_depth in [(5, 5), ]:
+        random.seed(42)  # To make this reproducible, set random seed.
+        winners = [play_against_our_baseline(our_depth=our_depth, their_depth=their_depth)[0] for _ in range(50)]
+        print('our depth: {}, their depth: {}'.format(our_depth, their_depth))
+        print(winners)
+        rate = win_rate(winners, 'B')
+        print('Our win rate was {} out of {} games'.format(rate, len(winners)))
+
+
 def runtime_benchmark():
-    total_runtimes = [play_against_dhconnelly_use_cpp(our_depth=5, their_depth=1)[1:] for _ in range(30)]
+    total_runtimes = [play_against_our_baseline(our_depth=5, their_depth=1)[1:] for _ in range(30)]
     total_runtimes = np.array(total_runtimes)
 
     print(total_runtimes.shape)
@@ -151,5 +197,5 @@ def runtime_benchmark():
 
 
 if __name__ == '__main__':
-    runtime_benchmark()
-    # winrate_benchmark()
+    # runtime_benchmark()
+    winrate_benchmark2()
