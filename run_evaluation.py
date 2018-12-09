@@ -1,10 +1,12 @@
 import othello
 import random
+import time
 from alphaBeta import alphaBeta
 import runMiniMax
 
 from third_party import dhconnelly
 from third_party import board_conversion
+import othello_ctypes
 
 minimax = runMiniMax.MiniMax()
 
@@ -74,6 +76,36 @@ def play_against_dhconnelly(our_depth=3, their_depth=3):
     return board.get_winner()
 
 
+def play_against_dhconnelly_use_cpp(our_depth=3, their_depth=3):
+    board = othello.Board()
+
+    for i in range(8):
+        for j in range(8):
+            board.force_place_symbol((i, j), '0')
+
+    board.force_place_symbol((3, 3), 'B')
+    board.force_place_symbol((4, 4), 'B')
+
+    board.force_place_symbol((3, 4), 'W')
+    board.force_place_symbol((4, 3), 'W')
+
+    while True:
+        move_b = othello_ctypes.best_move(board_conversion.convert_to_our_cpp_board(board), player='B',
+                                          strategy='minimax', depth=our_depth)
+        if move_b is not None:
+            board.make_move(move_b, 'B', play_test=False)
+
+        move_w = find_move_third_party_dhconnelly(board, 'W', depth=their_depth)
+        if move_w is not None:
+            board.make_move(move_w, 'W', play_test=False)
+
+        if move_b is None and move_w is None:
+            break
+
+    print(board.get_winner() + ' wins!')
+    return board.get_winner()
+
+
 def win_rate(result, player):
     assert isinstance(result, (list, tuple))
     assert player in ('W', 'B')
@@ -92,8 +124,8 @@ def win_rate(result, player):
 if __name__ == '__main__':
     for our_depth, their_depth in [(2, 2), (3, 2), (4, 2)]:
         random.seed(42)  # To make this reproducible, set random seed.
-        winners = [play_against_dhconnelly(our_depth=our_depth, their_depth=their_depth) for _ in range(3)]
+        winners = [play_against_dhconnelly_use_cpp(our_depth=our_depth, their_depth=their_depth) for _ in range(50)]
         print('our depth: {}, their depth: {}'.format(our_depth, their_depth))
         print(winners)
-        rate = win_rate(winners, 'W')
+        rate = win_rate(winners, 'B')
         print('Our win rate was {} out of {} games'.format(rate, len(winners)))
