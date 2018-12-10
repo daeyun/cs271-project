@@ -11,7 +11,7 @@ void best_move(const char *board_str, uint8_t player, uint8_t strategy, uint8_t 
   // TODO: select based on `strategy`.
 
 //  const auto searcher = [&](const array<uint8_t, 64> &board, uint8_t player, int depth) -> float {
-//    return -minimax(board, player, depth);
+//    return -minimax(board, player, depth, strategy);
 //  };
 //  const auto searcher = [&](const array<uint8_t, 64> &board, uint8_t player, int depth) -> float {
 //    return -minimax_ab(board, player, depth, -kInfinity, kInfinity, strategy);

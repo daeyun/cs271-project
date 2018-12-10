@@ -111,7 +111,8 @@ def play_against_dhconnelly_use_cpp(our_depth=3, their_depth=3):
         if move_b is None and move_w is None:
             break
 
-    print(board.get_winner() + ' wins!')
+    # print(board.get_winner() + ' wins!')
+    print(board.get_winner(), end='', flush=True)
     return board.get_winner(), total_runtime, total_runtime_theirs
 
 
@@ -139,7 +140,7 @@ def play_against_our_baseline(our_depth=3, their_depth=3):
             board.make_move(move_b, 'B', play_test=False)
 
         move_w, elapsed_seconds = othello_ctypes.best_move(board_conversion.convert_to_our_cpp_board(board),
-                                                           player='W', strategy='weighted_parity_1', depth=their_depth)
+                                                           player='W', strategy='random', depth=their_depth)
         total_runtime_theirs += elapsed_seconds
         if move_w is not None:
             board.make_move(move_w, 'W', play_test=False)
@@ -147,7 +148,7 @@ def play_against_our_baseline(our_depth=3, their_depth=3):
         if move_b is None and move_w is None:
             break
 
-    print(board.get_winner() + ' wins!')
+    print(board.get_winner(), end='', flush=True)
     return board.get_winner(), total_runtime, total_runtime_theirs
 
 
@@ -174,8 +175,11 @@ def win_rate(result, player):
 
 
 def winrate_benchmark1():
-    for our_depth, their_depth in [(2, 2), (3, 2), (4, 2), (5, 2)]:
-        winners = [play_against_dhconnelly_use_cpp(our_depth=our_depth, their_depth=their_depth)[0] for _ in range(50)]
+    # for our_depth, their_depth in [(1, 1), (2, 1), (3, 1), (4, 1), (5, 1)]:
+    # for our_depth, their_depth in [(1, 2), (2, 2), (3, 2), (4, 2), (5, 2)]:
+    # for our_depth, their_depth in [(1, 3), (2, 3), (3, 3), (4, 3), (5, 3)]:
+    for our_depth, their_depth in [(1, 1), (1, 2), (1, 3), (1, 4)]:
+        winners = [play_against_dhconnelly_use_cpp(our_depth=our_depth, their_depth=their_depth)[0] for _ in range(20)]
         print('our depth: {}, their depth: {}'.format(our_depth, their_depth))
         print(winners)
         rate = win_rate(winners, 'B')
@@ -183,8 +187,13 @@ def winrate_benchmark1():
 
 
 def winrate_benchmark2():
-    for our_depth, their_depth in [(3, 7), ]:
-        winners = [play_against_our_baseline(our_depth=our_depth, their_depth=their_depth)[0] for _ in range(50)]
+    d = 4
+    for our_depth, their_depth in [(1, d), (2, d), (3, d), (4, d), (5, d), ]:
+    # for our_depth, their_depth in [(d, 1), (d, 2), (d, 3), (d, 4), (d, 5), ]:
+    # for our_depth, their_depth in [(1, d), (2, d), (3, d), (4, d), (5, d), (6, d), ]:
+    # for our_depth, their_depth in [(1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (6, 2), ]:
+    # for our_depth, their_depth in [(1, 3), (2, 3), (3, 3), (4, 3), (5, 3), (6, 3), ]:
+        winners = [play_against_our_baseline(our_depth=our_depth, their_depth=their_depth)[0] for _ in range(30)]
         print('our depth: {}, their depth: {}'.format(our_depth, their_depth))
         print(winners)
         rate = win_rate(winners, 'B')
@@ -201,7 +210,7 @@ def winrate_benchmark3():
 
 
 def runtime_benchmark():
-    total_runtimes = [play_against_our_baseline(our_depth=5, their_depth=1)[1:] for _ in range(30)]
+    total_runtimes = [play_against_our_baseline(our_depth=5, their_depth=1)[1:] for _ in range(10)]
     total_runtimes = np.array(total_runtimes)
 
     print(total_runtimes.shape)
@@ -217,5 +226,8 @@ def runtime_benchmark2():
 
 
 if __name__ == '__main__':
+    runtime_benchmark()
     runtime_benchmark2()
-    # winrate_benchmark2()
+    winrate_benchmark1()
+    winrate_benchmark2()
+    winrate_benchmark3()
